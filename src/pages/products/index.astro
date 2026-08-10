@@ -5,6 +5,7 @@ import ProductCard from '@/components/ProductCard.astro';
 import { getCategories, getCompanyInfoMap, getProducts } from '@/lib/repository';
 
 const [companyInfo, categories, products] = await Promise.all([getCompanyInfoMap(), getCategories(), getProducts()]);
+const status = Astro.url.searchParams.get('status');
 ---
 
 <BaseLayout title="Produk | PT JMK Chemical Solutions" companyInfo={companyInfo}>
@@ -19,6 +20,7 @@ const [companyInfo, categories, products] = await Promise.all([getCompanyInfoMap
   </section>
 
   <section class="section-shell py-20">
+    {status === 'not-found' && <p class="mb-8 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700">Produk yang Anda cari tidak ditemukan.</p>}
     <div class="space-y-16">
       {categories.map((category) => {
         const groupedProducts = products.filter((product) => product.category === category.name);

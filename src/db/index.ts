@@ -12,6 +12,10 @@ const sql = connectionString
 
 export const db = sql ? drizzle(sql, { schema }) : null;
 
+export function isDatabaseAvailable() {
+  return db !== null;
+}
+
 export function requireDb() {
   if (!db) {
     throw new Error('DATABASE_URL belum dikonfigurasi.');

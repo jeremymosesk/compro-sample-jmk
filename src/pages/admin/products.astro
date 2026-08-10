@@ -12,9 +12,11 @@ const statusMessage =
       ? 'Produk berhasil diperbarui.'
       : status === 'deleted'
         ? 'Produk berhasil dihapus.'
-        : status === 'db-error'
-          ? 'DATABASE_URL belum dikonfigurasi atau tabel belum tersedia.'
-          : null;
+        : status === 'validation-error'
+          ? 'Mohon lengkapi semua field produk dengan benar.'
+          : status === 'db-error'
+            ? 'DATABASE_URL belum dikonfigurasi atau tabel belum tersedia.'
+            : null;
 ---
 
 <AdminLayout title="Kelola Produk | PT JMK Chemical Solutions">

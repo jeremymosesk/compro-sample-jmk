@@ -24,14 +24,15 @@ export const POST: APIRoute = async ({ request }) => {
       const description = String(formData.get('description') ?? '').trim();
       const category = String(formData.get('category') ?? '').trim();
       const imageUrl = String(formData.get('imageUrl') ?? '').trim();
+      const candidateSlug = slugInput || slugify(name);
 
-      if (!name || !description || !category || !imageUrl) {
-        return redirect('/admin/products?status=db-error');
+      if (!name || !description || !category || !imageUrl || !candidateSlug) {
+        return redirect('/admin/products?status=validation-error');
       }
 
       await db.insert(products).values({
         name,
-        slug: slugInput || slugify(name),
+        slug: candidateSlug,
         description,
         category,
         imageUrl,
@@ -48,12 +49,17 @@ export const POST: APIRoute = async ({ request }) => {
       const description = String(formData.get('description') ?? '').trim();
       const category = String(formData.get('category') ?? '').trim();
       const imageUrl = String(formData.get('imageUrl') ?? '').trim();
+      const candidateSlug = slug || slugify(name);
+
+      if (!id || !name || !description || !category || !imageUrl || !candidateSlug) {
+        return redirect('/admin/products?status=validation-error');
+      }
 
       await db
         .update(products)
         .set({
           name,
-          slug: slug || slugify(name),
+          slug: candidateSlug,
           description,
           category,
           imageUrl,
@@ -67,6 +73,11 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (action === 'delete') {
       const id = Number(formData.get('id'));
+
+      if (!id || Number.isNaN(id)) {
+        return redirect('/admin/products?status=validation-error');
+      }
+
       await db.delete(products).where(eq(products.id, id));
       return redirect('/admin/products?status=deleted');
     }

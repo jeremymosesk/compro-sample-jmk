@@ -23,7 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
       const icon = String(formData.get('icon') ?? '').trim();
 
       if (!name || !description || !icon) {
-        return redirect('/admin/services?status=db-error');
+        return redirect('/admin/services?status=validation-error');
       }
 
       await db.insert(services).values({ name, description, icon });
@@ -36,12 +36,21 @@ export const POST: APIRoute = async ({ request }) => {
       const description = String(formData.get('description') ?? '').trim();
       const icon = String(formData.get('icon') ?? '').trim();
 
+      if (!id || !name || !description || !icon) {
+        return redirect('/admin/services?status=validation-error');
+      }
+
       await db.update(services).set({ name, description, icon }).where(eq(services.id, id));
       return redirect('/admin/services?status=updated');
     }
 
     if (action === 'delete') {
       const id = Number(formData.get('id'));
+
+      if (!id || Number.isNaN(id)) {
+        return redirect('/admin/services?status=validation-error');
+      }
+
       await db.delete(services).where(eq(services.id, id));
       return redirect('/admin/services?status=deleted');
     }

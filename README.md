@@ -34,7 +34,7 @@ Website company profile berbasis **Astro SSR**, **Tailwind CSS**, **PostgreSQL**
    cp .env.example .env
    ```
 
-3. Isi `DATABASE_URL` dan `SESSION_SECRET` pada file `.env`.
+3. Isi `DATABASE_URL`, `SESSION_SECRET`, dan bila perlu ubah `ADMIN_USERNAME` / `ADMIN_PASSWORD` pada file `.env`.
 
 4. Siapkan tabel database:
 
@@ -59,8 +59,8 @@ Website company profile berbasis **Astro SSR**, **Tailwind CSS**, **PostgreSQL**
 ## Login Admin
 
 - URL: `/admin/login`
-- Username: `admin`
-- Password: `admin123`
+- Default development credential dapat diatur lewat `ADMIN_USERNAME` dan `ADMIN_PASSWORD` di `.env`.
+- Segera ganti credential default sebelum deployment produksi.
 
 ## Script Penting
 

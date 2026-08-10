@@ -12,9 +12,11 @@ const statusMessage =
       ? 'Layanan berhasil diperbarui.'
       : status === 'deleted'
         ? 'Layanan berhasil dihapus.'
-        : status === 'db-error'
-          ? 'DATABASE_URL belum dikonfigurasi atau tabel belum tersedia.'
-          : null;
+        : status === 'validation-error'
+          ? 'Mohon lengkapi semua field layanan dengan benar.'
+          : status === 'db-error'
+            ? 'DATABASE_URL belum dikonfigurasi atau tabel belum tersedia.'
+            : null;
 ---
 
 <AdminLayout title="Kelola Layanan | PT JMK Chemical Solutions">

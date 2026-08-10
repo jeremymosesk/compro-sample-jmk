@@ -2,12 +2,32 @@ import type { AstroCookies } from 'astro';
 import crypto from 'node:crypto';
 
 const COOKIE_NAME = 'jmk_admin_session';
-const USERNAME = 'admin';
-const PASSWORD = 'admin123';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 8;
 
+function getConfigValue(key: 'ADMIN_USERNAME' | 'ADMIN_PASSWORD' | 'SESSION_SECRET', fallback: string) {
+  const value = process.env[key]?.trim();
+
+  if (value) {
+    return value;
+  }
+
+  if (import.meta.env.PROD) {
+    throw new Error(`${key} wajib diatur pada environment produksi.`);
+  }
+
+  return fallback;
+}
+
+function getAdminUsername() {
+  return getConfigValue('ADMIN_USERNAME', 'admin');
+}
+
+function getAdminPassword() {
+  return getConfigValue('ADMIN_PASSWORD', 'admin123');
+}
+
 function getSessionSecret() {
-  return process.env.SESSION_SECRET ?? 'development-session-secret';
+  return getConfigValue('SESSION_SECRET', 'development-session-secret');
 }
 
 function base64Url(value: string) {
@@ -18,14 +38,25 @@ function sign(value: string) {
   return crypto.createHmac('sha256', getSessionSecret()).update(value).digest('base64url');
 }
 
+function safeEqual(left: string, right: string) {
+  const leftBuffer = crypto.createHash('sha256').update(left).digest();
+  const rightBuffer = crypto.createHash('sha256').update(right).digest();
+
+  return crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function signaturesMatch(payload: string, signature: string) {
+  return safeEqual(sign(payload), signature);
+}
+
 export function isValidAdminLogin(username: string, password: string) {
-  return username === USERNAME && password === PASSWORD;
+  return safeEqual(username, getAdminUsername()) && safeEqual(password, getAdminPassword());
 }
 
 export function createSessionValue() {
   const payload = base64Url(
     JSON.stringify({
-      username: USERNAME,
+      username: getAdminUsername(),
       expiresAt: Date.now() + SESSION_DURATION_MS,
     }),
   );
@@ -38,9 +69,16 @@ export function verifySession(value: string | undefined) {
     return false;
   }
 
-  const [payload, signature] = value.split('.');
+  const separatorIndex = value.indexOf('.');
 
-  if (!payload || !signature || sign(payload) !== signature) {
+  if (separatorIndex === -1) {
+    return false;
+  }
+
+  const payload = value.slice(0, separatorIndex);
+  const signature = value.slice(separatorIndex + 1);
+
+  if (!payload || !signature || !signaturesMatch(payload, signature)) {
     return false;
   }
 
@@ -50,7 +88,7 @@ export function verifySession(value: string | undefined) {
       expiresAt: number;
     };
 
-    return parsed.username === USERNAME && parsed.expiresAt > Date.now();
+    return safeEqual(parsed.username, getAdminUsername()) && parsed.expiresAt > Date.now();
   } catch {
     return false;
   }

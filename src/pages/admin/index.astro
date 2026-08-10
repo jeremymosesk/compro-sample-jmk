@@ -2,7 +2,7 @@
 import AdminLayout from '@/layouts/AdminLayout.astro';
 import { getCompanyInfoMap, getProducts, getServices } from '@/lib/repository';
 import { seededCompanyInfo } from '@/lib/site-data';
-import { db } from '@/db';
+import { isDatabaseAvailable } from '@/db';
 
 const [companyInfo, products, services] = await Promise.all([getCompanyInfoMap(), getProducts(), getServices()]);
 const status = Astro.url.searchParams.get('status');
@@ -34,7 +34,7 @@ const statusMessage =
       </div>
       <div class="card-surface p-6">
         <p class="text-sm text-slate-500">Status Database</p>
-        <p class="mt-2 text-lg font-bold text-slate-950">{db ? 'Siap digunakan' : 'Belum dikonfigurasi'}</p>
+        <p class="mt-2 text-lg font-bold text-slate-950">{isDatabaseAvailable() ? 'Siap digunakan' : 'Belum dikonfigurasi'}</p>
       </div>
     </div>
 
