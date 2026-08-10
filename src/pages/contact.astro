@@ -1,0 +1,64 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import { getCompanyInfoMap } from '@/lib/repository';
+import { getWhatsAppLink } from '@/lib/utils';
+
+const companyInfo = await getCompanyInfoMap();
+const status = Astro.url.searchParams.get('status');
+
+const statusMessage =
+  status === 'success'
+    ? 'Terima kasih, pesan Anda sudah kami terima.'
+    : status === 'error'
+      ? 'Mohon lengkapi semua field dengan benar.'
+      : status === 'db-error'
+        ? 'Penyimpanan pesan belum aktif. Silakan hubungi kami via WhatsApp.'
+        : null;
+---
+
+<BaseLayout title="Kontak | PT JMK Chemical Solutions" companyInfo={companyInfo}>
+  <section class="section-shell grid gap-10 py-20 lg:grid-cols-[0.95fr_1.05fr]">
+    <div class="space-y-6">
+      <SectionHeading
+        eyebrow="Kontak"
+        title="Mari diskusikan kebutuhan bahan kimia perusahaan Anda"
+        description="Kirim pesan melalui formulir atau hubungi tim kami secara langsung lewat WhatsApp untuk respon yang lebih cepat."
+      />
+
+      <div class="card-surface space-y-4 p-6 text-sm leading-7 text-slate-600">
+        <p><strong>Alamat:</strong> {companyInfo.address}</p>
+        <p><strong>Telepon:</strong> {companyInfo.phone}</p>
+        <p><strong>Email:</strong> {companyInfo.email}</p>
+      </div>
+
+      <a href={getWhatsAppLink(companyInfo.whatsapp)} target="_blank" rel="noreferrer" class="btn-accent">Chat via WhatsApp</a>
+    </div>
+
+    <div class="card-surface p-8">
+      <h2 class="text-2xl font-bold text-slate-950">Formulir Kontak</h2>
+      {statusMessage && <p class:list={['mt-4 rounded-2xl px-4 py-3 text-sm', status === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700']}>{statusMessage}</p>}
+      <form action="/api/contact" method="post" class="mt-6 space-y-5">
+        <div>
+          <label for="name" class="mb-2 block text-sm font-semibold text-slate-700">Nama</label>
+          <input id="name" name="name" required class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--color-primary)]" />
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="email" class="mb-2 block text-sm font-semibold text-slate-700">Email</label>
+            <input id="email" name="email" type="email" required class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--color-primary)]" />
+          </div>
+          <div>
+            <label for="phone" class="mb-2 block text-sm font-semibold text-slate-700">No. Telepon</label>
+            <input id="phone" name="phone" required class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--color-primary)]" />
+          </div>
+        </div>
+        <div>
+          <label for="message" class="mb-2 block text-sm font-semibold text-slate-700">Pesan</label>
+          <textarea id="message" name="message" rows="6" required class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--color-primary)]"></textarea>
+        </div>
+        <button type="submit" class="btn-primary w-full">Kirim Pesan</button>
+      </form>
+    </div>
+  </section>
+</BaseLayout>

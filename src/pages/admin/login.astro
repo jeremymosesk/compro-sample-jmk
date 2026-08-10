@@ -1,0 +1,43 @@
+---
+const error = Astro.url.searchParams.get('error');
+const loggedOut = Astro.url.searchParams.get('logged_out');
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Admin | PT JMK Chemical Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      body { font-family: Inter, sans-serif; margin: 0; background: linear-gradient(135deg, #1e3a5f, #0f172a); min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+      .card { width: min(100%, 420px); background: white; border-radius: 24px; padding: 2rem; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3); }
+      .input { width: 100%; border: 1px solid #cbd5e1; border-radius: 16px; padding: 0.85rem 1rem; margin-top: 0.5rem; box-sizing: border-box; }
+      .btn { width: 100%; border: 0; border-radius: 999px; background: #1e3a5f; color: white; padding: 0.9rem 1rem; font-weight: 700; cursor: pointer; }
+      .msg { padding: 0.9rem 1rem; border-radius: 16px; font-size: 0.95rem; margin-bottom: 1rem; }
+      .error { background: #fff7ed; color: #c2410c; }
+      .ok { background: #ecfdf5; color: #047857; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <p style="margin:0;color:#f59e0b;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:.8rem;">Admin Dashboard</p>
+      <h1 style="margin:0.75rem 0 0;font-size:2rem;color:#0f172a;">Login</h1>
+      <p style="color:#475569;line-height:1.7;">Masuk untuk mengelola produk, layanan, dan informasi perusahaan.</p>
+      {error && <p class="msg error">Username atau password tidak valid.</p>}
+      {loggedOut && <p class="msg ok">Anda telah logout.</p>}
+      <form action="/api/admin/login" method="post">
+        <label style="display:block;margin-bottom:1rem;font-weight:600;color:#334155;">Username
+          <input class="input" type="text" name="username" required />
+        </label>
+        <label style="display:block;margin-bottom:1.5rem;font-weight:600;color:#334155;">Password
+          <input class="input" type="password" name="password" required />
+        </label>
+        <button class="btn" type="submit">Masuk</button>
+      </form>
+    </div>
+  </body>
+</html>

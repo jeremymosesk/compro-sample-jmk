@@ -1,0 +1,90 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { getCategories, getProducts } from '@/lib/repository';
+
+const [categories, products] = await Promise.all([getCategories(), getProducts()]);
+const status = Astro.url.searchParams.get('status');
+
+const statusMessage =
+  status === 'created'
+    ? 'Produk berhasil ditambahkan.'
+    : status === 'updated'
+      ? 'Produk berhasil diperbarui.'
+      : status === 'deleted'
+        ? 'Produk berhasil dihapus.'
+        : status === 'validation-error'
+          ? 'Mohon lengkapi semua field produk dengan benar.'
+          : status === 'db-error'
+            ? 'DATABASE_URL belum dikonfigurasi atau tabel belum tersedia.'
+            : null;
+---
+
+<AdminLayout title="Kelola Produk | PT JMK Chemical Solutions">
+  <div class="space-y-8">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">Admin Produk</p>
+      <h1 class="mt-2 text-3xl font-bold text-slate-950">Kelola Produk</h1>
+      <p class="mt-3 text-sm leading-7 text-slate-600">Tambah, edit, atau hapus katalog produk bahan kimia perusahaan.</p>
+    </div>
+
+    {statusMessage && <p class:list={['rounded-2xl px-4 py-3 text-sm', ['created', 'updated', 'deleted'].includes(status ?? '') ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700']}>{statusMessage}</p>}
+
+    <section class="card-surface p-6 sm:p-8">
+      <h2 class="text-2xl font-bold text-slate-950">Tambah Produk Baru</h2>
+      <form action="/api/admin/products" method="post" class="mt-6 grid gap-5 md:grid-cols-2">
+        <input type="hidden" name="action" value="create" />
+        <label class="text-sm font-semibold text-slate-700">Nama Produk<input name="name" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
+        <label class="text-sm font-semibold text-slate-700">Slug (opsional)<input name="slug" class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
+        <label class="text-sm font-semibold text-slate-700">Kategori
+          <select name="category" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]">
+            {categories.map((category) => <option value={category.name}>{category.name}</option>)}
+          </select>
+        </label>
+        <label class="text-sm font-semibold text-slate-700">Gambar URL<input name="imageUrl" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
+        <label class="text-sm font-semibold text-slate-700 md:col-span-2">Deskripsi<textarea name="description" rows="4" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]"></textarea></label>
+        <label class="text-sm font-semibold text-slate-700">Produk Unggulan
+          <select name="isFeatured" class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]">
+            <option value="false">Tidak</option>
+            <option value="true">Ya</option>
+          </select>
+        </label>
+        <div class="flex items-end"><button type="submit" class="btn-primary">Simpan Produk</button></div>
+      </form>
+    </section>
+
+    <section class="space-y-6">
+      {products.map((product) => (
+        <article class="card-surface p-6 sm:p-8">
+          <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+            <form action="/api/admin/products" method="post" class="grid flex-1 gap-5 md:grid-cols-2">
+              <input type="hidden" name="action" value="update" />
+              <input type="hidden" name="id" value={product.id} />
+              <label class="text-sm font-semibold text-slate-700">Nama Produk<input name="name" value={product.name} required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
+              <label class="text-sm font-semibold text-slate-700">Slug<input name="slug" value={product.slug} required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
+              <label class="text-sm font-semibold text-slate-700">Kategori
+                <select name="category" class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]">
+                  {categories.map((category) => <option value={category.name} selected={category.name === product.category}>{category.name}</option>)}
+                </select>
+              </label>
+              <label class="text-sm font-semibold text-slate-700">Gambar URL<input name="imageUrl" value={product.imageUrl} required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
+              <label class="text-sm font-semibold text-slate-700 md:col-span-2">Deskripsi<textarea name="description" rows="4" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]">{product.description}</textarea></label>
+              <label class="text-sm font-semibold text-slate-700">Produk Unggulan
+                <select name="isFeatured" class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]">
+                  <option value="true" selected={product.isFeatured}>Ya</option>
+                  <option value="false" selected={!product.isFeatured}>Tidak</option>
+                </select>
+              </label>
+              <div class="flex items-end"><button type="submit" class="btn-primary">Update Produk</button></div>
+            </form>
+
+            <form action="/api/admin/products" method="post" class="xl:w-[160px]">
+              <input type="hidden" name="action" value="delete" />
+              <input type="hidden" name="id" value={product.id} />
+              <button type="submit" class="w-full rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700">Hapus</button>
+            </form>
+          </div>
+        </article>
+      ))}
+    </section>
+  </div>
+</AdminLayout>

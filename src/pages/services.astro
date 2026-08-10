@@ -1,0 +1,31 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import { getCompanyInfoMap, getServices } from '@/lib/repository';
+
+const [companyInfo, services] = await Promise.all([getCompanyInfoMap(), getServices()]);
+---
+
+<BaseLayout title="Layanan | PT JMK Chemical Solutions" companyInfo={companyInfo}>
+  <section class="bg-slate-50 py-20">
+    <div class="section-shell">
+      <SectionHeading
+        eyebrow="Layanan"
+        title="Layanan yang mendukung kelancaran pengadaan dan operasional Anda"
+        description="Kami menyediakan dukungan end-to-end, mulai dari penyediaan produk hingga konsultasi solusi untuk kebutuhan bahan kimia perusahaan Anda."
+      />
+    </div>
+  </section>
+
+  <section class="section-shell py-20">
+    <div class="grid gap-6 md:grid-cols-2">
+      {services.map((service) => (
+        <article class="card-surface p-8">
+          <div class="mb-5 text-5xl">{service.icon}</div>
+          <h2 class="text-2xl font-bold text-slate-950">{service.name}</h2>
+          <p class="mt-4 text-base leading-8 text-slate-600">{service.description}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>
