@@ -1,6 +1,6 @@
 export const heroImage = 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1600';
 export const aboutImage = 'https://images.unsplash.com/photo-1581093450021-4a7360e9a6b5?w=800';
-export const whatsappNumber = '+62 812-3456-7890';
+export const whatsappNumber = '+62 812-8414-6656';
 export const whatsappMessage = 'Halo, saya ingin mengetahui lebih lanjut tentang produk Anda.';
 
 export const seededCategories = [

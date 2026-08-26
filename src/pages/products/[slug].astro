@@ -14,8 +14,10 @@ if (!product) {
   title={`${product.name} | PT JMK Chemical Solutions`}
   companyInfo={companyInfo}
 >
-  <section class="section-shell grid gap-10 py-20 lg:grid-cols-[1fr_1fr] lg:items-center">
-    <img src={product.imageUrl} alt={product.name} class="h-full min-h-[360px] w-full rounded-[2rem] object-cover" />
+  <section class="section-shell grid gap-10 py-20 lg:grid-cols-[1fr_1fr] lg:items-start">
+    <div class="aspect-[4/3] max-h-[500px] w-full overflow-hidden rounded-[2rem] bg-slate-100 border border-slate-200/80 shadow-md">
+      <img src={product.imageUrl} alt={product.name} class="h-full w-full object-cover" />
+    </div>
     <div class="space-y-6">
       <span class="inline-flex rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700">{product.category}</span>
       <h1 class="text-4xl font-bold text-slate-950">{product.name}</h1>

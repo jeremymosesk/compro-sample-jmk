@@ -1,10 +1,16 @@
 ---
 import { getWhatsAppLink } from '@/lib/utils';
-import { whatsappNumber } from '@/lib/site-data';
+import { whatsappNumber as defaultWhatsappNumber } from '@/lib/site-data';
+
+interface Props {
+  whatsappNumber?: string;
+}
+
+const { whatsappNumber = defaultWhatsappNumber } = Astro.props;
 ---
 
 <a
-  href={getWhatsAppLink(whatsappNumber)}
+  href={getWhatsAppLink(whatsappNumber || defaultWhatsappNumber)}
   target="_blank"
   rel="noreferrer"
   aria-label="Hubungi kami melalui WhatsApp"

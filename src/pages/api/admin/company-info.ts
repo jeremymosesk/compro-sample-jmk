@@ -28,7 +28,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     return redirect('/admin?status=company-updated');
-  } catch {
+  } catch (error) {
+    console.error('Error saat memperbarui informasi perusahaan:', error);
     return redirect('/admin?status=db-error');
   }
 };

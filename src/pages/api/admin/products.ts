@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { requireDb } from '@/db';
 import { products } from '@/db/schema';
 import { slugify, toBoolean } from '@/lib/utils';
+import { handleFileUpload } from '@/lib/upload';
 
 function redirect(location: string) {
   return new Response(null, {
@@ -23,7 +24,18 @@ export const POST: APIRoute = async ({ request }) => {
       const slugInput = String(formData.get('slug') ?? '').trim();
       const description = String(formData.get('description') ?? '').trim();
       const category = String(formData.get('category') ?? '').trim();
-      const imageUrl = String(formData.get('imageUrl') ?? '').trim();
+      let imageUrl = String(formData.get('imageUrl') ?? '').trim();
+      const imageFile = formData.get('imageFile');
+
+      // If file was uploaded
+      if (imageFile && typeof imageFile === 'object' && 'size' in imageFile && (imageFile as File).size > 0) {
+        const uploadResult = await handleFileUpload(imageFile, 'products');
+        if (!uploadResult.success) {
+          return redirect(`/admin/products?status=${uploadResult.error ?? 'upload-failed'}`);
+        }
+        imageUrl = uploadResult.url!;
+      }
+
       const candidateSlug = slugInput || slugify(name);
 
       if (!name || !description || !category || !imageUrl || !candidateSlug) {
@@ -48,7 +60,18 @@ export const POST: APIRoute = async ({ request }) => {
       const slug = String(formData.get('slug') ?? '').trim();
       const description = String(formData.get('description') ?? '').trim();
       const category = String(formData.get('category') ?? '').trim();
-      const imageUrl = String(formData.get('imageUrl') ?? '').trim();
+      let imageUrl = String(formData.get('imageUrl') ?? '').trim();
+      const imageFile = formData.get('imageFile');
+
+      // If file was uploaded on update
+      if (imageFile && typeof imageFile === 'object' && 'size' in imageFile && (imageFile as File).size > 0) {
+        const uploadResult = await handleFileUpload(imageFile, 'products');
+        if (!uploadResult.success) {
+          return redirect(`/admin/products?status=${uploadResult.error ?? 'upload-failed'}`);
+        }
+        imageUrl = uploadResult.url!;
+      }
+
       const candidateSlug = slug || slugify(name);
 
       if (!id || !name || !description || !category || !imageUrl || !candidateSlug) {
@@ -78,12 +101,13 @@ export const POST: APIRoute = async ({ request }) => {
         return redirect('/admin/products?status=validation-error');
       }
 
-      await db.delete(products).where(eq(products.id, id));
-      return redirect('/admin/products?status=deleted');
-    }
+        await db.delete(products).where(eq(products.id, id));
+        return redirect('/admin/products?status=deleted');
+      }
 
-    return redirect('/admin/products?status=db-error');
-  } catch {
+      return redirect('/admin/products?status=validation-error');
+    } catch (error) {
+    console.error('Error pada API admin products:', error);
     return redirect('/admin/products?status=db-error');
   }
 };

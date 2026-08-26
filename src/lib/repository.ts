@@ -1,5 +1,5 @@
 import { asc, desc, eq, type InferSelectModel } from 'drizzle-orm';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { categories, companyInfo, products, services } from '@/db/schema';
 import {
   seededCategories,
@@ -37,35 +37,40 @@ const fallbackCompanyInfoRows: CompanyInfoRow[] = seededCompanyInfo.map((entry, 
 }));
 const fallbackCompanyInfo = Object.fromEntries(fallbackCompanyInfoRows.map((entry) => [entry.key, entry.value]));
 
-async function withFallback<T>(query: () => Promise<T>, fallback: T): Promise<T> {
-  if (!db) {
+async function withFallback<T>(
+  query: (database: NonNullable<ReturnType<typeof getDb>>) => Promise<T>,
+  fallback: T
+): Promise<T> {
+  const database = getDb();
+  if (!database) {
     return fallback;
   }
 
   try {
-    return await query();
-  } catch {
+    return await query(database);
+  } catch (error) {
+    console.error('Query database error (fallback ke data lokal):', error);
     return fallback;
   }
 }
 
 export async function getCategories() {
   return withFallback(
-    async () => db!.select().from(categories).orderBy(asc(categories.name)),
+    async (database) => database.select().from(categories).orderBy(asc(categories.name)),
     fallbackCategories,
   );
 }
 
 export async function getProducts() {
   return withFallback(
-    async () => db!.select().from(products).orderBy(asc(products.name)),
+    async (database) => database.select().from(products).orderBy(asc(products.name)),
     fallbackProducts,
   );
 }
 
 export async function getFeaturedProducts(limit = 4) {
   const items = await withFallback(
-    async () => db!.select().from(products).where(eq(products.isFeatured, true)).orderBy(desc(products.createdAt)),
+    async (database) => database.select().from(products).where(eq(products.isFeatured, true)).orderBy(desc(products.createdAt)),
     fallbackProducts.filter((product) => product.isFeatured),
   );
 
@@ -74,7 +79,7 @@ export async function getFeaturedProducts(limit = 4) {
 
 export async function getProductBySlug(slug: string) {
   const items = await withFallback(
-    async () => db!.select().from(products).where(eq(products.slug, slug)),
+    async (database) => database.select().from(products).where(eq(products.slug, slug)),
     fallbackProducts.filter((product) => product.slug === slug),
   );
 
@@ -83,13 +88,16 @@ export async function getProductBySlug(slug: string) {
 
 export async function getServices() {
   return withFallback(
-    async () => db!.select().from(services).orderBy(asc(services.name)),
+    async (database) => database.select().from(services).orderBy(asc(services.name)),
     fallbackServices,
   );
 }
 
 export async function getCompanyInfoMap(): Promise<CompanyInfoMap> {
-  const rows = await withFallback(async () => db!.select().from(companyInfo), fallbackCompanyInfoRows);
+  const rows = await withFallback(
+    async (database) => database.select().from(companyInfo),
+    fallbackCompanyInfoRows
+  );
 
   return {
     ...fallbackCompanyInfo,

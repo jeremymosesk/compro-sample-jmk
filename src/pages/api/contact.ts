@@ -24,7 +24,8 @@ export const POST: APIRoute = async ({ request }) => {
     const db = requireDb();
     await db.insert(contactLeads).values({ name, email, phone, message });
     return redirect('/contact?status=success');
-  } catch {
+  } catch (error) {
+    console.error('Error saat menyimpan contact lead:', error);
     return redirect('/contact?status=db-error');
   }
 };

@@ -1,22 +1,23 @@
 ---
 import AdminLayout from '@/layouts/AdminLayout.astro';
+import ServiceIcon from '@/components/ServiceIcon.astro';
 import { getServices } from '@/lib/repository';
 
 const services = await getServices();
 const status = Astro.url.searchParams.get('status');
 
-const statusMessage =
-  status === 'created'
-    ? 'Layanan berhasil ditambahkan.'
-    : status === 'updated'
-      ? 'Layanan berhasil diperbarui.'
-      : status === 'deleted'
-        ? 'Layanan berhasil dihapus.'
-        : status === 'validation-error'
-          ? 'Mohon lengkapi semua field layanan dengan benar.'
-          : status === 'db-error'
-            ? 'DATABASE_URL belum dikonfigurasi atau tabel belum tersedia.'
-            : null;
+const statusMessages: Record<string, { text: string; type: 'success' | 'error' | 'warning' }> = {
+  created: { text: 'Layanan berhasil ditambahkan.', type: 'success' },
+  updated: { text: 'Layanan berhasil diperbarui.', type: 'success' },
+  deleted: { text: 'Layanan berhasil dihapus.', type: 'success' },
+  'validation-error': { text: 'Mohon lengkapi semua field layanan dengan benar.', type: 'warning' },
+  'file-too-large': { text: 'Ukuran file terlalu besar! Maksimal ukuran file ikon adalah 2 MB.', type: 'error' },
+  'invalid-file-type': { text: 'Format file tidak didukung! Gunakan format SVG, PNG, JPG, JPEG, atau WebP.', type: 'error' },
+  'upload-failed': { text: 'Gagal mengunggah file ikon. Silakan coba lagi.', type: 'error' },
+  'db-error': { text: 'DATABASE_URL belum dikonfigurasi atau tabel belum tersedia.', type: 'warning' },
+};
+
+const currentStatus = status ? statusMessages[status] : null;
 ---
 
 <AdminLayout title="Kelola Layanan | PT JMK Chemical Solutions">
@@ -24,42 +25,277 @@ const statusMessage =
     <div>
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">Admin Layanan</p>
       <h1 class="mt-2 text-3xl font-bold text-slate-950">Kelola Layanan</h1>
-      <p class="mt-3 text-sm leading-7 text-slate-600">Perbarui daftar layanan yang ditawarkan perusahaan.</p>
+      <p class="mt-3 text-sm leading-7 text-slate-600">Perbarui daftar layanan perusahaan. Anda bisa mengunggah ikon file (SVG, PNG), memasukkan URL gambar, atau menggunakan emoji.</p>
     </div>
 
-    {statusMessage && <p class:list={['rounded-2xl px-4 py-3 text-sm', ['created', 'updated', 'deleted'].includes(status ?? '') ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700']}>{statusMessage}</p>}
+    {currentStatus && (
+      <p
+        class:list={[
+          'rounded-2xl px-4 py-3 text-sm font-medium',
+          currentStatus.type === 'success'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : currentStatus.type === 'error'
+              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+              : 'bg-amber-50 text-amber-700 border border-amber-200',
+        ]}
+      >
+        {currentStatus.text}
+      </p>
+    )}
 
+    <!-- FORM TAMBAH LAYANAN BARU -->
     <section class="card-surface p-6 sm:p-8">
       <h2 class="text-2xl font-bold text-slate-950">Tambah Layanan Baru</h2>
-      <form action="/api/admin/services" method="post" class="mt-6 grid gap-5 md:grid-cols-2">
+      <form
+        action="/api/admin/services"
+        method="post"
+        enctype="multipart/form-data"
+        class="mt-6 grid gap-6 md:grid-cols-2"
+      >
         <input type="hidden" name="action" value="create" />
-        <label class="text-sm font-semibold text-slate-700">Nama Layanan<input name="name" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
-        <label class="text-sm font-semibold text-slate-700">Ikon (emoji / teks singkat)<input name="icon" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
-        <label class="text-sm font-semibold text-slate-700 md:col-span-2">Deskripsi<textarea name="description" rows="4" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]"></textarea></label>
-        <div><button type="submit" class="btn-primary">Simpan Layanan</button></div>
+
+        <label class="text-sm font-semibold text-slate-700 md:col-span-2">
+          Nama Layanan *
+          <input
+            name="name"
+            placeholder="Contoh: Pengiriman Cepat & Terjadwal"
+            required
+            class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]"
+          />
+        </label>
+
+        <!-- INPUT IKON: FLEKSIBEL (FILE SVG/PNG / URL / EMOJI) -->
+        <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 space-y-4">
+          <p class="text-sm font-bold text-slate-900">Ikon Layanan *</p>
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label class="text-xs font-semibold text-slate-600 block mb-1.5">
+                Opsi 1: Upload File Ikon (Maks. 2MB: SVG, PNG, JPG, WebP)
+              </label>
+              <input
+                type="file"
+                name="iconFile"
+                id="create-service-file"
+                accept=".svg,.png,.jpg,.jpeg,.webp,.gif"
+                class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-primary)] file:text-white hover:file:bg-[var(--color-primary)]/90 cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-600 block mb-1.5">
+                Opsi 2: Atau Input Link URL Gambar / Emoji
+              </label>
+              <input
+                name="icon"
+                id="create-service-input"
+                placeholder="https://... atau /uploads/... atau emoji 🚚"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-normal outline-none transition focus:border-[var(--color-primary)]"
+              />
+              <p class="mt-1 text-[11px] text-slate-500">Bisa diisi URL ikon atau emoji seperti 🚚, 🧪, 💧, 📦</p>
+            </div>
+          </div>
+
+          <!-- LIVE PREVIEW CONTAINER -->
+          <div class="flex items-center gap-3 pt-2">
+            <span class="text-xs text-slate-500">Preview Ikon:</span>
+            <div class="h-14 w-14 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-sm flex items-center justify-center text-3xl text-amber-700">
+              <img
+                id="create-service-img"
+                src=""
+                alt="Preview ikon"
+                class="h-full w-full object-contain p-2 hidden"
+              />
+              <span id="create-service-text" class="leading-none text-2xl">✨</span>
+            </div>
+          </div>
+        </div>
+
+        <label class="text-sm font-semibold text-slate-700 md:col-span-2">
+          Deskripsi Layanan *
+          <textarea
+            name="description"
+            rows="4"
+            required
+            placeholder="Jelaskan bagaimana layanan ini membantu operasional dan kebutuhan pengadaan klien..."
+            class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]"
+          ></textarea>
+        </label>
+
+        <div class="md:col-span-2 flex justify-end">
+          <button type="submit" class="btn-primary">Simpan Layanan Baru</button>
+        </div>
       </form>
     </section>
 
+    <!-- DAFTAR & EDIT LAYANAN -->
     <section class="space-y-6">
+      <h2 class="text-xl font-bold text-slate-900">Daftar Layanan ({services.length})</h2>
       {services.map((service) => (
         <article class="card-surface p-6 sm:p-8">
           <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-            <form action="/api/admin/services" method="post" class="grid flex-1 gap-5 md:grid-cols-2">
+            <form
+              action="/api/admin/services"
+              method="post"
+              enctype="multipart/form-data"
+              class="grid flex-1 gap-5 md:grid-cols-2"
+            >
               <input type="hidden" name="action" value="update" />
               <input type="hidden" name="id" value={service.id} />
-              <label class="text-sm font-semibold text-slate-700">Nama Layanan<input name="name" value={service.name} required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
-              <label class="text-sm font-semibold text-slate-700">Ikon<input name="icon" value={service.icon} required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]" /></label>
-              <label class="text-sm font-semibold text-slate-700 md:col-span-2">Deskripsi<textarea name="description" rows="4" required class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]">{service.description}</textarea></label>
-              <div><button type="submit" class="btn-primary">Update Layanan</button></div>
+
+              <label class="text-sm font-semibold text-slate-700 md:col-span-2">
+                Nama Layanan
+                <input
+                  name="name"
+                  value={service.name}
+                  required
+                  class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]"
+                />
+              </label>
+
+              <!-- UPLOAD & EDIT IKON -->
+              <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <!-- Preview Ikon Saat Ini -->
+                  <div class="shrink-0">
+                    <p class="text-xs text-slate-500 mb-1">Ikon Saat Ini:</p>
+                    <div id={`edit-service-box-${service.id}`} class="flex items-center">
+                      <ServiceIcon icon={service.icon} name={service.name} size="md" />
+                    </div>
+                  </div>
+
+                  <!-- Ubah Ikon -->
+                  <div class="flex-1 space-y-3">
+                    <div>
+                      <label class="text-xs font-semibold text-slate-700 block mb-1">
+                        Ganti File Ikon (Maks. 2MB: SVG, PNG, JPG, WebP):
+                      </label>
+                      <input
+                        type="file"
+                        name="iconFile"
+                        accept=".svg,.png,.jpg,.jpeg,.webp,.gif"
+                        data-box-target={`edit-service-box-${service.id}`}
+                        class="service-edit-file w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-slate-700 block mb-1">
+                        Atau Ubah URL Ikon / Emoji:
+                      </label>
+                      <input
+                        name="icon"
+                        value={service.icon}
+                        data-box-target={`edit-service-box-${service.id}`}
+                        class="service-edit-input w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-normal outline-none transition focus:border-[var(--color-primary)]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <label class="text-sm font-semibold text-slate-700 md:col-span-2">
+                Deskripsi
+                <textarea
+                  name="description"
+                  rows="4"
+                  required
+                  class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 font-normal outline-none transition focus:border-[var(--color-primary)]"
+                >{service.description}</textarea>
+              </label>
+
+              <div class="flex items-end">
+                <button type="submit" class="btn-primary">Update Layanan</button>
+              </div>
             </form>
-            <form action="/api/admin/services" method="post" class="xl:w-[160px]">
+
+            <form
+              action="/api/admin/services"
+              method="post"
+              class="xl:w-[160px]"
+              onsubmit="return confirm('Apakah Anda yakin ingin menghapus layanan ini?');"
+            >
               <input type="hidden" name="action" value="delete" />
               <input type="hidden" name="id" value={service.id} />
-              <button type="submit" class="w-full rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700">Hapus</button>
+              <button
+                type="submit"
+                class="w-full rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700"
+              >
+                Hapus
+              </button>
             </form>
           </div>
         </article>
       ))}
     </section>
   </div>
+
+  <script>
+    // Create service preview
+    const sFile = document.getElementById('create-service-file') as HTMLInputElement | null;
+    const sInput = document.getElementById('create-service-input') as HTMLInputElement | null;
+    const sImg = document.getElementById('create-service-img') as HTMLImageElement | null;
+    const sText = document.getElementById('create-service-text') as HTMLElement | null;
+
+    if (sFile && sImg && sText) {
+      sFile.addEventListener('change', () => {
+        const file = sFile.files?.[0];
+        if (file) {
+          if (file.size > 2 * 1024 * 1024) {
+            alert('Ukuran file melebihi 2MB!');
+            sFile.value = '';
+            return;
+          }
+          sImg.src = URL.createObjectURL(file);
+          sImg.classList.remove('hidden');
+          sText.classList.add('hidden');
+        }
+      });
+    }
+
+    if (sInput && sImg && sText) {
+      sInput.addEventListener('input', () => {
+        const val = sInput.value.trim();
+        if (val.startsWith('http') || val.startsWith('/') || val.endsWith('.svg') || val.endsWith('.png')) {
+          sImg.src = val;
+          sImg.classList.remove('hidden');
+          sText.classList.add('hidden');
+        } else if (val) {
+          sText.textContent = val;
+          sText.classList.remove('hidden');
+          sImg.classList.add('hidden');
+        }
+      });
+    }
+
+    // Edit service preview
+    document.querySelectorAll<HTMLInputElement>('.service-edit-file').forEach((input) => {
+      input.addEventListener('change', () => {
+        const targetId = input.getAttribute('data-box-target');
+        const box = targetId ? document.getElementById(targetId) : null;
+        const file = input.files?.[0];
+        if (file && box) {
+          if (file.size > 2 * 1024 * 1024) {
+            alert('Ukuran file melebihi 2MB!');
+            input.value = '';
+            return;
+          }
+          box.innerHTML = `<div class="h-14 w-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center overflow-hidden"><img src="${URL.createObjectURL(file)}" class="h-full w-full object-contain p-2" /></div>`;
+        }
+      });
+    });
+
+    document.querySelectorAll<HTMLInputElement>('.service-edit-input').forEach((input) => {
+      input.addEventListener('input', () => {
+        const targetId = input.getAttribute('data-box-target');
+        const box = targetId ? document.getElementById(targetId) : null;
+        const val = input.value.trim();
+        if (box) {
+          if (val.startsWith('http') || val.startsWith('/') || val.endsWith('.svg') || val.endsWith('.png')) {
+            box.innerHTML = `<div class="h-14 w-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center overflow-hidden"><img src="${val}" class="h-full w-full object-contain p-2" /></div>`;
+          } else if (val) {
+            box.innerHTML = `<div class="h-14 w-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-3xl">${val}</div>`;
+          }
+        }
+      });
+    });
+  </script>
 </AdminLayout>

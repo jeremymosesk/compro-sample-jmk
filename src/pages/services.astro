@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SectionHeading from '@/components/SectionHeading.astro';
+import ServiceIcon from '@/components/ServiceIcon.astro';
 import { getCompanyInfoMap, getServices } from '@/lib/repository';
 
 const [companyInfo, services] = await Promise.all([getCompanyInfoMap(), getServices()]);
@@ -20,9 +21,11 @@ const [companyInfo, services] = await Promise.all([getCompanyInfoMap(), getServi
   <section class="section-shell py-20">
     <div class="grid gap-6 md:grid-cols-2">
       {services.map((service) => (
-        <article class="card-surface p-8">
-          <div class="mb-5 text-5xl">{service.icon}</div>
-          <h2 class="text-2xl font-bold text-slate-950">{service.name}</h2>
+        <article class="card-surface group p-8 transition-all hover:shadow-lg">
+          <div class="mb-6">
+            <ServiceIcon icon={service.icon} name={service.name} size="lg" />
+          </div>
+          <h2 class="text-2xl font-bold text-slate-950 transition-colors group-hover:text-[var(--color-primary)]">{service.name}</h2>
           <p class="mt-4 text-base leading-8 text-slate-600">{service.description}</p>
         </article>
       ))}

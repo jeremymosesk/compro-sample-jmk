@@ -1,0 +1,38 @@
+---
+import { isImageSource } from '@/lib/upload';
+
+interface Props {
+  icon: string;
+  name?: string;
+  class?: string;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { icon, name, class: customClass = '', size = 'md' } = Astro.props;
+const isImage = isImageSource(icon);
+
+const sizeClasses = {
+  sm: 'h-11 w-11 rounded-xl text-xl',
+  md: 'h-14 w-14 rounded-2xl text-3xl',
+  lg: 'h-16 w-16 rounded-2xl text-4xl',
+};
+---
+
+<div
+  class:list={[
+    'flex items-center justify-center bg-amber-50 text-amber-700 border border-amber-200/70 overflow-hidden shrink-0 transition duration-300 group-hover:scale-105 group-hover:bg-amber-100/80',
+    sizeClasses[size] || sizeClasses.md,
+    customClass,
+  ]}
+>
+  {isImage ? (
+    <img
+      src={icon}
+      alt={name ? `Ikon ${name}` : 'Ikon Layanan'}
+      class="h-full w-full object-contain p-2"
+      loading="lazy"
+    />
+  ) : (
+    <span class="select-none leading-none">{icon}</span>
+  )}
+</div>

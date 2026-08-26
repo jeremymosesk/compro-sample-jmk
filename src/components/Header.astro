@@ -1,4 +1,9 @@
 ---
+interface Props {
+  companyName?: string;
+}
+
+const { companyName = 'PT JMK Chemical Solutions' } = Astro.props;
 const currentPath = Astro.url.pathname;
 const links = [
   { href: '/', label: 'Beranda' },
@@ -13,7 +18,7 @@ const links = [
   <div class="section-shell flex items-center justify-between gap-4 py-4">
     <a href="/" class="flex items-center gap-3 text-sm font-bold text-[var(--color-primary)] sm:text-base">
       <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-lg text-white">JMK</span>
-      <span>PT JMK Chemical Solutions</span>
+      <span>{companyName}</span>
     </a>
 
     <nav class="hidden items-center gap-6 md:flex">

@@ -16,7 +16,7 @@ export const services = pgTable('services', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull(),
-  icon: varchar('icon', { length: 50 }).notNull(),
+  icon: text('icon').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
